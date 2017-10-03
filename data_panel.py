@@ -28,7 +28,7 @@ import utils
 
 Rooms = ['素草', '木琴', '凡花', '八月', '黑白', '夏尔', '暖春', '小院']
 
-Sources = ['去哪', '美团', '艺龙', '线下']
+Sources = ['', '去哪', '美团', '艺龙', '线下']
 
 Columns = ['Date', 'Room', 'Source', 'Price', 'Commission', 'Comment']
 
