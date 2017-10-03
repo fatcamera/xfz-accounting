@@ -336,6 +336,7 @@ class DataTableView(QtWidgets.QTableView):
         self.setModel(DataTableModel(self))
         self.setItemDelegate(EditDelegate(self))
         self.setAlternatingRowColors(True)
-        self.resizeColumnsToContents()
+        self.horizontalHeader().setStretchLastSection(True)
+        #self.resizeColumnsToContents()
         #
-        self.model().modelReset.connect(self.resizeColumnsToContents)
+        #self.model().modelReset.connect(self.resizeColumnsToContents)
