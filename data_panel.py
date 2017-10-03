@@ -333,4 +333,9 @@ class DataTableView(QtWidgets.QTableView):
             parent {QtWidgets.QWidget} -- Widget parent. (default: {None})
         """
         super(DataTableView, self).__init__(parent)
+        self.setModel(DataTableModel(self))
+        self.setItemDelegate(EditDelegate(self))
         self.setAlternatingRowColors(True)
+        self.resizeColumnsToContents()
+        #
+        self.model().modelReset.connect(self.resizeColumnsToContents)

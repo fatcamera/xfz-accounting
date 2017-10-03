@@ -53,16 +53,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """Create widgets.
         """
         # data panel
-        self._data_model = data_panel.DataTableModel(self)
         self._data_view = data_panel.DataTableView()
-        self._data_view.setModel(self._data_model)
-        self._data_view.setItemDelegate(data_panel.EditDelegate(self))
-        self._data_view.resizeColumnsToContents()
-        self._data_model.modelReset.connect(self._data_view.resizeColumnsToContents)
-        self._data_model.modelReset.connect(
-            lambda : self.statusBar().set_stat(*(self._data_model.stat())))
-        self._data_model.dataChanged.connect(
-            lambda : self.statusBar().set_stat(*(self._data_model.stat())))
+        self._data_view.model().modelReset.connect(
+            lambda : self.statusBar().set_stat(*(self._data_view.model().stat())))
+        self._data_view.model().dataChanged.connect(
+            lambda : self.statusBar().set_stat(*(self._data_view.model().stat())))
         self.setCentralWidget(self._data_view)
         # status bar
         self.setStatusBar(main_statusbar.MainStatusBar(self))
@@ -214,7 +209,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 caption=QtCore.QCoreApplication.translate('MainWindow', 'Open Bill'),
                 directory=os.path.dirname(last_filename),
                 filter=QtCore.QCoreApplication.translate('MainWindow', 'Bill (*.csv)'))[0]
-            if os.path.isfile(filename) and self._data_model.open(filename):
+            if os.path.isfile(filename) and self._data_view.model().open(filename):
                 self._filename = filename
 
     def on_new_action_triggered(self, checekd):
@@ -223,7 +218,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._check_clean():
             dialog = month_picker.MonthPickerDialog(self)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
-                self._data_model.new(dialog.year(), dialog.month())
+                self._data_view.model().new(dialog.year(), dialog.month())
                 self._filename = None
 
     def on_import_action_triggered(self, checked):
@@ -233,7 +228,7 @@ class MainWindow(QtWidgets.QMainWindow):
             directory=os.path.dirname(last_filename),
             filter=QtCore.QCoreApplication.translate('MainWindow', 'Web Bill (*.xls *.xlsx)'))[0]
         if len(filenames) > 0:
-            if self._data_model.import_files(filenames):
+            if self._data_view.model().import_files(filenames):
                 self.statusBar().showMessage(
                     QtCore.QCoreApplication.translate('MainWindow', 'Import Successed.'), 3000)
                 self._settings.setValue('File/LastImport', filenames[0])
@@ -256,7 +251,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._filename = filename
         #
         if self._filename is not None:
-            if self._data_model.save(self._filename):
+            if self._data_view.model().save(self._filename):
                 self.statusBar().showMessage(
                     QtCore.QCoreApplication.translate('MainWindow', 'Save Successed.'), 3000)
                 self._settings.setValue('File/LastFilename', self._filename)
