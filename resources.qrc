@@ -1,0 +1,15 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+<file alias="open.png">images/Open_96px.png</file>
+<file alias="new.png">images/Add File_96px.png</file>
+<file alias="import.png">images/Download from the Cloud_96px.png</file>
+<file alias="save.png">images/Save_96px.png</file>
+<file alias="exit.png">images/Shutdown_96px.png</file>
+<file alias="undo.png">images/Undo_96px.png</file>
+<file alias="redo.png">images/Redo_96px.png</file>
+<file alias="documentation.png">images/Help_96px.png</file>
+<file alias="app.png">images/Test Passed_96px.png</file>
+<file alias="app.ico">images/icons8_Test_Passed.ico</file>
+<file alias="languages_zh_CN">languages/zh_CN.qm</file>
+</qresource>
+</RCC>
