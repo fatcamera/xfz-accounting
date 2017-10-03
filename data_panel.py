@@ -209,8 +209,18 @@ class DataTableModel(QtCore.QAbstractTableModel):
         data = None
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
-                data = QtCore.QCoreApplication.translate(
-                    'DataTableModel', self._records.columns[section])
+                if section == DataTableModel.Date:
+                    data = QtCore.QCoreApplication.translate('DataTableModel', 'Date')
+                elif section == DataTableModel.Room:
+                    data = QtCore.QCoreApplication.translate('DataTableModel', 'Room')
+                elif section == DataTableModel.Source:
+                    data = QtCore.QCoreApplication.translate('DataTableModel', 'Source')
+                elif section == DataTableModel.Price:
+                    data = QtCore.QCoreApplication.translate('DataTableModel', 'Price')
+                elif section == DataTableModel.Commission:
+                    data = QtCore.QCoreApplication.translate('DataTableModel', 'Commission')
+                elif section == DataTableModel.Comment:
+                    data = QtCore.QCoreApplication.translate('DataTableModel', 'Comment')
         return data
 
     def data(self, index, role):

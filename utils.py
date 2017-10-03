@@ -28,36 +28,38 @@ log_conf = {
         }   
     },  
     "handlers": {
+        # "file": {
+        #     "class": "logging.FileHandler",
+        #     "filename": "runtime.log",
+        #     "level": "DEBUG",
+        #     "formatter": "standard"
+        # },  
         "console": {
             "class": "logging.StreamHandler",
             "level": "DEBUG",
             "formatter": "standard"
         },  
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": "runtime.log",
-            "level": "DEBUG",
-            "formatter": "standard"
-        },  
+        # "mp_file": {
+        #     "class": "logging.FileHandler",
+        #     "filename": "runtime.log",
+        #     "level": "INFO",
+        #     "formatter": "multiprocessing"
+        # },
         "mp_console": {
             "class": "logging.StreamHandler",
             "level": "INFO",
             "formatter": "multiprocessing"
-        },  
-        "mp_file": {
-            "class": "logging.FileHandler",
-            "filename": "runtime.log",
-            "level": "INFO",
-            "formatter": "multiprocessing"
-        }
+        }  
     },
     "root": {
-        "handlers": ["console", "file"],
+        # "handlers": ["console", "file"],
+        "handlers": ["console"],
         "level": "DEBUG"
     },
     "loggers": {
         "multiprocessing": {
-            "handlers": ["mp_console", "mp_file"],
+            # "handlers": ["mp_console", "mp_file"],
+            "handlers": ["mp_console"],
             "level": "INFO"
         }
     }

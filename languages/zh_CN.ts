@@ -4,40 +4,40 @@
 <context>
     <name>DataTableModel</name>
     <message>
-        <location filename="../month_picker.py" line="74"/>
+        <location filename="../data_panel.py" line="214"/>
         <source>Date</source>
-        <translation type="obsolete">日期</translation>
+        <translation>日期</translation>
     </message>
     <message>
-        <location filename="../month_picker.py" line="74"/>
+        <location filename="../data_panel.py" line="216"/>
         <source>Room</source>
-        <translation type="obsolete">房型</translation>
+        <translation>房型</translation>
     </message>
     <message>
-        <location filename="../month_picker.py" line="74"/>
+        <location filename="../data_panel.py" line="218"/>
         <source>Source</source>
-        <translation type="obsolete">渠道</translation>
+        <translation>渠道</translation>
     </message>
     <message>
-        <location filename="../month_picker.py" line="74"/>
+        <location filename="../data_panel.py" line="220"/>
         <source>Price</source>
-        <translation type="obsolete">价格</translation>
+        <translation>价格</translation>
     </message>
     <message>
-        <location filename="../month_picker.py" line="74"/>
+        <location filename="../data_panel.py" line="222"/>
         <source>Commission</source>
-        <translation type="obsolete">佣金</translation>
+        <translation>佣金</translation>
     </message>
     <message>
-        <location filename="../month_picker.py" line="74"/>
+        <location filename="../data_panel.py" line="224"/>
         <source>Comment</source>
-        <translation type="obsolete">备注</translation>
+        <translation>备注</translation>
     </message>
 </context>
 <context>
     <name>MainStatusBar</name>
     <message>
-        <location filename="../main_statusbar.py" line="38"/>
+        <location filename="../main_statusbar.py" line="37"/>
         <source>Room Nights: {}, Income: {:.2f}, Expense: {:.2f}, Profit: {:.2f}, Share: {:.2f}</source>
         <translation>间夜: {}, 收入: {:.2f}, 支出: {:.2f}, 利润: {:.2f}, 分成: {:.2f}</translation>
     </message>
