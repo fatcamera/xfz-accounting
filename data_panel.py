@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import logging
 import traceback
+import openpyxl as px
 
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -96,6 +97,67 @@ class DataTableModel(QtCore.QAbstractTableModel):
             assert np.all(df.columns == Columns)
             self.beginResetModel()
             self._records = df
+            self.endResetModel()
+        except Exception as e:
+            logging.error(traceback.format_exc())
+            success = False
+        finally:
+            return success
+
+    def _import_qunar_prepaid(self, data, filename):
+        logging.info('importing {}'.format(filename))
+        wb = px.load_workbook(filename)
+        for row in list(wb['订单明细'].rows)[1:-1]:
+            rooms = int(row[10].value)
+            assert rooms == 1
+            nights = int(row[11].value)
+            room_nights = rooms * nights
+            checkin = row[13].value
+            checkout = row[14].value
+            price = float(row[19].value[1:]) / room_nights
+            commission = float(row[20].value[1:]) / room_nights
+            room = row[25].value[:-1]
+            for date in pd.date_range(checkin, checkout, closed='left'):
+                data.loc[
+                        (data.Date == date) & (data.Room == room),
+                        ['Source', 'Price', 'Commission']
+                    ] = ['去哪', price, commission]
+
+    def _import_meituan_prepaid(self, data, filename):
+        logging.info('importing {}'.format(filename))
+        wb = px.load_workbook(filename)
+        for row in list(wb['订单详情'].rows)[1:]:
+            room_nights = int(row[6].value)
+            checkin, checkout = row[3].value.split('~')
+            commission = float(row[8].value) / room_nights
+            price = float(row[9].value) / room_nights + commission
+            room = row[4].value
+            for date in pd.date_range(checkin, checkout, closed='left'):
+                data.loc[
+                        (data.Date == date) & (data.Room == room),
+                        ['Source', 'Price', 'Commission']
+                    ] = ['美团', price, commission]
+
+    def _import_filename(self, data, filename):
+        wb = px.load_workbook(filename, read_only=True)
+        sheets = wb.get_sheet_names()
+        if sheets == ['总计', '订单明细', '人工调整明细', '过期返现明细']:
+            self._import_qunar_prepaid(data, filename)
+        elif sheets == ['总表', '订单详情', '商家承担退款', '商家承担优惠', '调整金额']:
+            self._import_meituan_prepaid(data, filename)
+        else:
+            raise RuntimeError('file not supported: {}'.format(filename))
+
+    def import_files(self, filenames):
+        success = True
+        try:
+            # import files
+            temp = self._records.copy(deep=True)
+            for filename in filenames:
+                self._import_filename(temp, filename)
+            # replace data
+            self.beginResetModel()
+            self._records = temp
             self.endResetModel()
         except Exception as e:
             logging.error(traceback.format_exc())

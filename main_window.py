@@ -139,9 +139,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # menu
         menu = self.menuBar().addMenu(QtCore.QCoreApplication.translate('MainWindow', '&File'))
-        menu.addAction(open_action)
         menu.addAction(new_action)
-        menu.addAction(import_action)
+        menu.addAction(open_action)
         menu.addAction(save_action)
         menu.addSeparator()
         menu.addAction(exit_action)
@@ -149,6 +148,8 @@ class MainWindow(QtWidgets.QMainWindow):
         menu = self.menuBar().addMenu(QtCore.QCoreApplication.translate('MainWindow', '&Edit'))
         menu.addAction(undo_action)
         menu.addAction(redo_action)
+        menu.addSeparator()
+        menu.addAction(import_action)
 
         menu = self.menuBar().addMenu(QtCore.QCoreApplication.translate('MainWindow', '&Help'))
         menu.addAction(documentation_action)
@@ -157,15 +158,16 @@ class MainWindow(QtWidgets.QMainWindow):
         # toolbar
         toolbar = self.addToolBar(QtCore.QCoreApplication.translate('MainWindow', 'File Toolbar'))
         toolbar.setObjectName('FileToolBar')
-        toolbar.addAction(open_action)
         toolbar.addAction(new_action)
-        toolbar.addAction(import_action)
+        toolbar.addAction(open_action)
         toolbar.addAction(save_action)
         
         toolbar = self.addToolBar(QtCore.QCoreApplication.translate('MainWindow', 'Edit Toolbar'))
         toolbar.setObjectName('EditToolBar')
         toolbar.addAction(undo_action)
         toolbar.addAction(redo_action)
+        toolbar.addSeparator()
+        toolbar.addAction(import_action)
 
     def _load_settings(self):
         """Load application settings on startup.
@@ -225,11 +227,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._filename = None
 
     def on_import_action_triggered(self, checked):
-        
-        pass
+        last_filename = self._settings.value('File/LastImport', '')
+        filenames = QtWidgets.QFileDialog.getOpenFileNames(self,
+            caption=QtCore.QCoreApplication.translate('MainWindow', 'Import Web Bill'),
+            directory=os.path.dirname(last_filename),
+            filter=QtCore.QCoreApplication.translate('MainWindow', 'Web Bill (*.xls *.xlsx)'))[0]
+        if len(filenames) > 0:
+            if self._data_model.import_files(filenames):
+                self.statusBar().showMessage(
+                    QtCore.QCoreApplication.translate('MainWindow', 'Import Successed.'), 3000)
+                self._settings.setValue('File/LastImport', filenames[0])
+            else:
+                self.statusBar().showMessage(
+                    QtCore.QCoreApplication.translate('MainWindow', 'Import Failed.'), 3000)
 
-
-    @utils.dumpargs 
     def on_save_action_triggered(self, checked=False):
         """Save current instance.
         
