@@ -245,7 +245,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.EditRole:
             data = self._records.iloc[index.row(), index.column()]
         elif role == QtCore.Qt.TextAlignmentRole:
-            if index.column() in [DataTableModel.Room, DataTableModel.Source]:
+            if index.column() in [DataTableModel.Date, DataTableModel.Room, DataTableModel.Source]:
                 data = QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
             elif index.column() in [DataTableModel.Price, DataTableModel.Commission]:
                 data = QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
