@@ -73,7 +73,11 @@ class DataTableModel(QtCore.QAbstractTableModel):
         success = True
         try:
             self._records.to_csv(filename, index=False, encoding='utf-8')
-        except:
+        except Exception as e:
+            logging.error(traceback.format_exc())
+            QtWidgets.QMessageBox.warning(
+                self.parent().parent(), QtWidgets.QApplication.instance().applicationName(),
+                '{}<p>{}'.format(str(e), traceback.format_exc()))
             success = False
         finally:
             return success
@@ -92,6 +96,9 @@ class DataTableModel(QtCore.QAbstractTableModel):
             self.endResetModel()
         except Exception as e:
             logging.error(traceback.format_exc())
+            QtWidgets.QMessageBox.warning(
+                self.parent().parent(), QtWidgets.QApplication.instance().applicationName(),
+                '{}<p>{}'.format(str(e), traceback.format_exc()))
             success = False
         finally:
             return success
@@ -153,6 +160,9 @@ class DataTableModel(QtCore.QAbstractTableModel):
             self.endResetModel()
         except Exception as e:
             logging.error(traceback.format_exc())
+            QtWidgets.QMessageBox.warning(
+                self.parent().parent(), QtWidgets.QApplication.instance().applicationName(),
+                '{}<p>{}'.format(str(e), traceback.format_exc()))
             success = False
         finally:
             return success
@@ -319,7 +329,6 @@ class DataTableView(QtWidgets.QTableView):
     """Label table view.
     """
 
-
     def __init__(self, parent=None):
         """Constructor.
         
@@ -331,6 +340,3 @@ class DataTableView(QtWidgets.QTableView):
         self.setItemDelegate(EditDelegate(self))
         self.setAlternatingRowColors(True)
         self.horizontalHeader().setStretchLastSection(True)
-        #self.resizeColumnsToContents()
-        #
-        #self.model().modelReset.connect(self.resizeColumnsToContents)

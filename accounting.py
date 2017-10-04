@@ -5,7 +5,6 @@ Authors: caobinbin(caobinbin@live.com)
 Date:    2017/10/03
 
 TODO:
-fix: error message
 feature: import qunar cash
 feature: import elong
 feature: header filter
