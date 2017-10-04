@@ -31,9 +31,18 @@ class MainStatusBar(QtWidgets.QStatusBar):
         super(MainStatusBar, self).__init__(parent)
         self._stat_label = QtWidgets.QLabel(self)
         self._stat_label.setIndent(5)
+        self._transfer_label = QtWidgets.QLabel(self)
+        self._transfer_label.setIndent(5)
         self.addPermanentWidget(self._stat_label)
+        self.addPermanentWidget(self._transfer_label)
 
-    def set_stat(self, rooms, income, expense, share):
-        self._stat_label.setText(QtCore.QCoreApplication.translate('MainStatusBar',
-            'Room Nights: {}, Income: {:.2f}, Expense: {:.2f}, Profit: {:.2f}, Share: {:.2f}')
-            .format(rooms, income, expense, income - expense, share))
+    def set_stat(self, rooms, income, expense, share, yanyan):
+        self._stat_label.setText(
+            QtCore.QCoreApplication.translate(
+                'MainStatusBar',
+                'Room Nights: {}, Income: {:.2f}, Expense: {:.2f}, Profit: {:.2f}').format(
+                rooms, income, expense, income - expense))
+        self._transfer_label.setText(
+            QtCore.QCoreApplication.translate(
+                'MainStatusBar',
+                "Yanyan's Income: {:.2f}, Neighbour's Share: {:.2f}").format(yanyan, share))

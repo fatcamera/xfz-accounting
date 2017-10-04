@@ -170,7 +170,8 @@ class DataTableModel(QtCore.QAbstractTableModel):
         income = self._records.Price.sum()
         expense = self._records.Commission.sum()
         share = self._records[self._records.Room == '暖春'].Commission.sum()
-        return rooms, income, expense, share
+        yanyan = self._records[self._records.Source == '线下'].Price.sum()
+        return rooms, income, expense, share, yanyan
 
     def rowCount(self, index):
         """Override. Number of rows.
