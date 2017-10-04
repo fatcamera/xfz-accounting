@@ -211,6 +211,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 filter=QtCore.QCoreApplication.translate('MainWindow', 'Bill (*.csv)'))[0]
             if os.path.isfile(filename) and self._data_view.model().open(filename):
                 self._filename = filename
+                self._settings.setValue('File/LastFilename', self._filename)
 
     def on_new_action_triggered(self, checekd):
         """Slot for open label action.
