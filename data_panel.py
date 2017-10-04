@@ -28,7 +28,7 @@ import utils
 
 Rooms = ['素草', '木琴', '凡花', '八月', '黑白', '夏尔', '暖春', '小院']
 
-Sources = ['', '去哪', '美团', '艺龙', '线下']
+Sources = ['', '去哪-预付', '去哪-现付', '美团-预定', '艺龙-预付', '线下']
 
 Columns = ['Date', 'Room', 'Source', 'Price', 'Commission', 'Comment']
 
@@ -46,14 +46,6 @@ class DataTableModel(QtCore.QAbstractTableModel):
         """
         super(DataTableModel, self).__init__(parent)
         self._records = pd.DataFrame([], columns=Columns)
-
-    def records(self):
-        """Get the labels.
-        
-        Returns:
-            list(datatypes.Label) -- The labels.
-        """
-        return self._records
 
     @utils.dumpargs
     def new(self, year, month):
@@ -121,7 +113,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
                 data.loc[
                         (data.Date == date) & (data.Room == room),
                         ['Source', 'Price', 'Commission']
-                    ] = ['去哪', price, commission]
+                    ] = ['去哪-预付', price, commission]
 
     def _import_meituan_prepaid(self, data, filename):
         logging.info('importing {}'.format(filename))
@@ -136,7 +128,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
                 data.loc[
                         (data.Date == date) & (data.Room == room),
                         ['Source', 'Price', 'Commission']
-                    ] = ['美团', price, commission]
+                    ] = ['美团-预定', price, commission]
 
     def _import_filename(self, data, filename):
         wb = px.load_workbook(filename, read_only=True)
@@ -170,7 +162,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
         income = self._records.Price.sum()
         expense = self._records.Commission.sum()
         share = self._records[self._records.Room == '暖春'].Commission.sum()
-        yanyan = self._records[self._records.Source == '线下'].Price.sum() \
+        yanyan = self._records[self._records.Source.isin(['去哪-现付', '线下'])].Price.sum() \
             - self._records[(self._records.Source == '线下') & (self._records.Room != '暖春')].Commission.sum()
         return rooms, income, expense, share, yanyan
 

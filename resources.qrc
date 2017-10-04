@@ -4,6 +4,7 @@
 <file alias="new.png">images/Add File_96px.png</file>
 <file alias="import.png">images/Download from the Cloud_96px.png</file>
 <file alias="save.png">images/Save_96px.png</file>
+<file alias="save_as.png">images/Save as_96px.png</file>
 <file alias="exit.png">images/Shutdown_96px.png</file>
 <file alias="undo.png">images/Undo_96px.png</file>
 <file alias="redo.png">images/Redo_96px.png</file>

@@ -5,16 +5,13 @@ Authors: caobinbin(caobinbin@live.com)
 Date:    2017/10/03
 
 TODO:
-feature: undostack
 fix: error message
 feature: import qunar cash
 feature: import elong
-feature: insert / delete row
-feature: add dummy room
-feature: save as
 feature: header filter
+feature: undostack
 feature: search
-
+feature: insert / delete row
 """
 
 

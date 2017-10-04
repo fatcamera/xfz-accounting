@@ -100,6 +100,14 @@ class MainWindow(QtWidgets.QMainWindow):
         #    lambda clean: save_action.setEnabled(not clean))
         save_action.triggered.connect(self.on_save_action_triggered)
 
+        save_as_action = QtWidgets.QAction(
+            QtCore.QCoreApplication.translate('MainWindow', 'Save &As'), self)
+        save_as_action.setShortcut(QtGui.QKeySequence.SaveAs)
+        save_as_action.setIcon(QtGui.QIcon(':/save_as.png'))
+        save_as_action.setToolTip(
+            QtCore.QCoreApplication.translate('MainWindow', 'Save Bill As'))
+        save_as_action.triggered.connect(self.on_save_as_action_triggered)
+
         exit_action = QtWidgets.QAction(
             QtCore.QCoreApplication.translate('MainWindow', 'E&xit'), self)
         exit_action.setShortcut(QtGui.QKeySequence.Quit)
@@ -137,6 +145,7 @@ class MainWindow(QtWidgets.QMainWindow):
         menu.addAction(new_action)
         menu.addAction(open_action)
         menu.addAction(save_action)
+        menu.addAction(save_as_action)
         menu.addSeparator()
         menu.addAction(exit_action)
 
@@ -252,6 +261,28 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._filename = filename
         #
         if self._filename is not None:
+            if self._data_view.model().save(self._filename):
+                self.statusBar().showMessage(
+                    QtCore.QCoreApplication.translate('MainWindow', 'Save Successed.'), 3000)
+                self._settings.setValue('File/LastFilename', self._filename)
+                return True
+            else:
+                self.statusBar().showMessage(
+                    QtCore.QCoreApplication.translate('MainWindow', 'Save Failed.'), 3000)
+                return False
+
+    def on_save_as_action_triggered(self, checked=False):
+        """Save current instance.
+        
+        Returns:
+            bool -- True if save successed, False otherwise.
+        """
+        filename = QtWidgets.QFileDialog.getSaveFileName(self,
+            caption=QtCore.QCoreApplication.translate('MainWindow', 'Save Bill As'),
+            directory=os.path.dirname(self._settings.value('File/LastFilename', '')),
+            filter=QtCore.QCoreApplication.translate('MainWindow', 'Bill (*.csv)'))[0]
+        if len(filename) > 0:
+            self._filename = filename
             if self._data_view.model().save(self._filename):
                 self.statusBar().showMessage(
                     QtCore.QCoreApplication.translate('MainWindow', 'Save Successed.'), 3000)
