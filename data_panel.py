@@ -24,13 +24,10 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 
+import datatypes
 import utils
+import undocommands
 
-Rooms = ['素草', '木琴', '凡花', '八月', '黑白', '夏尔', '暖春', '小院']
-
-Sources = ['', '去哪-预付', '去哪-现付', '美团-预定', '艺龙-预付', '线下']
-
-Columns = ['Date', 'Room', 'Source', 'Price', 'Commission', 'Comment']
 
 class DataTableModel(QtCore.QAbstractTableModel):
     """Custom table model used by label table view.
@@ -45,34 +42,45 @@ class DataTableModel(QtCore.QAbstractTableModel):
             parent {QtWidgets.QWidget} -- Widget parent. (default: {None})
         """
         super(DataTableModel, self).__init__(parent)
-        self._records = pd.DataFrame([], columns=Columns)
+        self._records = pd.DataFrame([], columns=datatypes.Columns)
+        self._undo_stack = QtWidgets.QUndoStack(self)
+
+    def undo_stack(self):
+        return self._undo_stack
+
+    def set_data(self, df):
+        self.beginResetModel()
+        self._records = df
+        self.endResetModel()
 
     @utils.dumpargs
     def new(self, year, month):
         days = calendar.monthrange(year, month)[1]
         date_df = pd.DataFrame(
             pd.date_range(datetime.datetime(year, month, 1), periods=days), columns=['Date'])
-        room_df = pd.DataFrame(Rooms, columns=['Room'])
+        room_df = pd.DataFrame(datatypes.Rooms, columns=['Room'])
         rows = itertools.product(date_df.iterrows(), room_df.iterrows())
         merge_df = pd.DataFrame(left.append(right) for (_, left), (_, right) in rows)
         merge_df = merge_df.reset_index(drop=True)
 
-        self.beginResetModel()
-        self._records = pd.DataFrame({
+        self.set_data(
+            pd.DataFrame({
                 'Date': merge_df['Date'],
                 'Room': merge_df['Room'],
                 'Source': '',
                 'Price': 0.0,
                 'Commission': 0.0,
                 'Comment': ''
-            }, columns=Columns)
-        self.endResetModel()
+            }, columns=datatypes.Columns)
+        )
+        self._undo_stack.clear()
 
     @utils.dumpargs
     def save(self, filename):
         success = True
         try:
             self._records.to_csv(filename, index=False, encoding='utf-8')
+            self._undo_stack.setClean()
         except Exception as e:
             logging.error(traceback.format_exc())
             QtWidgets.QMessageBox.warning(
@@ -89,11 +97,10 @@ class DataTableModel(QtCore.QAbstractTableModel):
             df = pd.read_csv(filename, encoding='utf-8',
                 header=0, parse_dates=[0], keep_default_na=False,
                 dtype={'Source': str, 'Price': float, 'Commission': float, 'Comment': str})
-            assert len(df.columns) == len(Columns)
-            assert np.all(df.columns == Columns)
-            self.beginResetModel()
-            self._records = df
-            self.endResetModel()
+            assert len(df.columns) == len(datatypes.Columns)
+            assert np.all(df.columns == datatypes.Columns)
+            self.set_data(df)
+            self._undo_stack.clear()
         except Exception as e:
             logging.error(traceback.format_exc())
             QtWidgets.QMessageBox.warning(
@@ -154,10 +161,11 @@ class DataTableModel(QtCore.QAbstractTableModel):
             temp = self._records.copy(deep=True)
             for filename in filenames:
                 self._import_filename(temp, filename)
-            # replace data
-            self.beginResetModel()
-            self._records = temp
-            self.endResetModel()
+            command = undocommands.ResetCommand(self,
+                QtCore.QCoreApplication.translate('DataTableModel', 'Import'))
+            command.old_data = self._records.copy(deep=True)
+            command.new_data = temp.copy(deep=True)
+            self._undo_stack.push(command)
         except Exception as e:
             logging.error(traceback.format_exc())
             QtWidgets.QMessageBox.warning(
@@ -243,7 +251,11 @@ class DataTableModel(QtCore.QAbstractTableModel):
             if index.column() == DataTableModel.Date:
                 data = self._records.iloc[index.row(), index.column()].strftime('%Y-%m-%d')
             elif index.column() in [DataTableModel.Price, DataTableModel.Commission]:
-                data = '{:.2f}'.format(self._records.iloc[index.row(), index.column()])
+                data = self._records.iloc[index.row(), index.column()]
+                if np.fabs(data) < 0.01:
+                    data = ''
+                else:
+                    data = '{:.2f}'.format(data)
             else:
                 data = self._records.iloc[index.row(), index.column()]
         elif role == QtCore.Qt.EditRole:
@@ -284,9 +296,18 @@ class DataTableModel(QtCore.QAbstractTableModel):
             success = True
         #
         if success:
-            self._records.iloc[index.row(), index.column()] = value
-            self.dataChanged.emit(index, index)
+            command = undocommands.EditCommand(self,
+                QtCore.QCoreApplication.translate('DataTableModel', 'Edit'))
+            command.index = index
+            command.old_value = self._records.iloc[index.row(), index.column()]
+            command.new_value = value
+            self._undo_stack.push(command)
+
         return success
+
+    def set_value(self, index, value):
+        self._records.iloc[index.row(), index.column()] = value
+        self.dataChanged.emit(index, index)
 
 
 class EditDelegate(QtWidgets.QStyledItemDelegate):
@@ -304,7 +325,8 @@ class EditDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         if index.column() == DataTableModel.Source:
             combo = QtWidgets.QComboBox(parent)
-            combo.addItems(Sources)
+            combo.addItem('')
+            combo.addItems(datatypes.Sources)
             return combo
         else:
             return super(EditDelegate, self).createEditor(parent, option, index)
@@ -336,7 +358,114 @@ class DataTableView(QtWidgets.QTableView):
             parent {QtWidgets.QWidget} -- Widget parent. (default: {None})
         """
         super(DataTableView, self).__init__(parent)
-        self.setModel(DataTableModel(self))
         self.setItemDelegate(EditDelegate(self))
         self.setAlternatingRowColors(True)
         self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setHighlightSections(False)
+
+
+class DataProxyModel(QtCore.QSortFilterProxyModel):
+
+    def __init__(self, parent=None):
+        super(DataProxyModel, self).__init__(parent)
+        self._room = QtCore.QCoreApplication.translate('DataPanel', 'All')
+        self._source = QtCore.QCoreApplication.translate('DataPanel', 'All')
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if self._room != QtCore.QCoreApplication.translate('DataPanel', 'All'):
+            index = self.sourceModel().index(source_row, 1, source_parent)
+            data = self.sourceModel().data(index, QtCore.Qt.DisplayRole)
+            if data != self._room:
+                return False
+        if self._source != QtCore.QCoreApplication.translate('DataPanel', 'All'):
+            index = self.sourceModel().index(source_row, 2, source_parent)
+            data = self.sourceModel().data(index, QtCore.Qt.DisplayRole)
+            if data != self._source:
+                return False
+        return True
+
+    def set_room(self, room):
+        self._room = room
+        self.invalidateFilter()
+
+    def set_source(self, source):
+        self._source = source
+        self.invalidateFilter()
+
+    def reset_filters(self):
+        self._room = QtCore.QCoreApplication.translate('DataPanel', 'All')
+        self._source = QtCore.QCoreApplication.translate('DataPanel', 'All')
+        self.invalidateFilter()
+
+
+class DataPanel(QtWidgets.QWidget):
+    """[summary]
+    """
+
+    sig_data_changed = QtCore.pyqtSignal(name='sig_data_changed')
+
+    def __init__(self, parent=None):
+        super(DataPanel, self).__init__(parent)
+
+        filter_layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
+
+        label = QtWidgets.QLabel(
+            QtCore.QCoreApplication.translate('DataPanel', 'Filter Rules:'))
+        label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        filter_layout.addWidget(label)
+
+        label = QtWidgets.QLabel(
+            QtCore.QCoreApplication.translate('DataPanel', 'Room'))
+        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        filter_layout.addWidget(label)
+
+        self._room_combo = QtWidgets.QComboBox()
+        self._room_combo.addItem(QtCore.QCoreApplication.translate('DataPanel', 'All'))
+        self._room_combo.addItems(datatypes.Rooms)
+        filter_layout.addWidget(self._room_combo)
+
+        label = QtWidgets.QLabel(
+            QtCore.QCoreApplication.translate('DataPanel', 'Source'))
+        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        filter_layout.addWidget(label)
+
+        self._source_combo = QtWidgets.QComboBox()
+        self._source_combo.addItem(QtCore.QCoreApplication.translate('DataPanel', 'All'))
+        self._source_combo.addItems(datatypes.Sources)
+        filter_layout.addWidget(self._source_combo)
+
+        self._data_model = DataTableModel(self)
+        self._proxy_model = DataProxyModel(self)
+        self._proxy_model.setSourceModel(self._data_model)
+        self._data_view = DataTableView()
+        self._data_view.setModel(self._proxy_model)
+
+        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.TopToBottom)
+        layout.addLayout(filter_layout)
+        layout.addWidget(self._data_view)
+
+        self.setLayout(layout)
+
+        #
+        self._room_combo.currentTextChanged.connect(self._proxy_model.set_room)
+        self._source_combo.currentTextChanged.connect(self._proxy_model.set_source)
+        self._data_model.modelReset.connect(self.sig_data_changed)
+        self._data_model.dataChanged.connect(self.sig_data_changed)
+
+    def open_bill(self, filename):
+        return self._data_model.open(filename)
+
+    def new_bill(self, year, month):
+        self._data_model.new(year, month)
+
+    def import_files(self, filenames):
+        return self._data_model.import_files(filenames)
+
+    def save_bill(self, filename):
+        return self._data_model.save(filename)
+
+    def get_stat(self):
+        return self._data_model.stat()
+
+    def undo_stack(self):
+        return self._data_model.undo_stack()

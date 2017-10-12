@@ -26,6 +26,7 @@ import resources
 import main_statusbar
 import data_panel
 import month_picker
+import datatypes
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -41,7 +42,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__(parent)
         # data
         self._settings = QtCore.QSettings()
-        self._undo_stack = QtWidgets.QUndoStack(self)
         self._filename = None
         # ui
         self._create_widgets()
@@ -53,12 +53,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """Create widgets.
         """
         # data panel
-        self._data_view = data_panel.DataTableView()
-        self._data_view.model().modelReset.connect(
-            lambda : self.statusBar().set_stat(*(self._data_view.model().stat())))
-        self._data_view.model().dataChanged.connect(
-            lambda : self.statusBar().set_stat(*(self._data_view.model().stat())))
-        self.setCentralWidget(self._data_view)
+        self._data_panel = data_panel.DataPanel()
+        self._data_panel.sig_data_changed.connect(
+            lambda : self.statusBar().set_stat(*(self._data_panel.get_stat())))
+        self.setCentralWidget(self._data_panel)
         # status bar
         self.setStatusBar(main_statusbar.MainStatusBar(self))
 
@@ -95,9 +93,9 @@ class MainWindow(QtWidgets.QMainWindow):
         save_action.setIcon(QtGui.QIcon(':/save.png'))
         save_action.setToolTip(
             QtCore.QCoreApplication.translate('MainWindow', 'Save Bill'))
-        #save_action.setEnabled(False)
-        #self._undo_stack.cleanChanged.connect(
-        #    lambda clean: save_action.setEnabled(not clean))
+        save_action.setEnabled(False)
+        self._data_panel.undo_stack().cleanChanged.connect(
+            lambda clean: save_action.setEnabled(not clean))
         save_action.triggered.connect(self.on_save_action_triggered)
 
         save_as_action = QtWidgets.QAction(
@@ -115,12 +113,12 @@ class MainWindow(QtWidgets.QMainWindow):
         exit_action.setToolTip(QtCore.QCoreApplication.translate('MainWindow', 'Exit'))
         exit_action.triggered.connect(self.close)
 
-        undo_action = self._undo_stack.createUndoAction(
+        undo_action = self._data_panel.undo_stack().createUndoAction(
             self, QtCore.QCoreApplication.translate('MainWindow', '&Undo'))
         undo_action.setShortcut(QtGui.QKeySequence.Undo)
         undo_action.setIcon(QtGui.QIcon(':/undo.png'))
 
-        redo_action = self._undo_stack.createRedoAction(
+        redo_action = self._data_panel.undo_stack().createRedoAction(
             self, QtCore.QCoreApplication.translate('MainWindow', '&Redo'))
         redo_action.setShortcut(QtGui.QKeySequence.Redo)
         redo_action.setIcon(QtGui.QIcon(':/redo.png'))
@@ -191,7 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
             bool -- True if current instance is clean, False otherwise.
         """
         ret = False
-        if self._undo_stack.isClean():
+        if self._data_panel.undo_stack().isClean():
             ret = True
         else:
             action = QtWidgets.QMessageBox.warning(
@@ -204,7 +202,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if action == QtWidgets.QMessageBox.Cancel:
                 ret = False
             elif action == QtWidgets.QMessageBox.Save:
-                ret = self._save_instance()
+                ret = self.on_save_action_triggered()
             else: # QtWidgets.QMessageBox.Discard
                 ret = True
         return ret
@@ -218,7 +216,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 caption=QtCore.QCoreApplication.translate('MainWindow', 'Open Bill'),
                 directory=os.path.dirname(last_filename),
                 filter=QtCore.QCoreApplication.translate('MainWindow', 'Bill (*.csv)'))[0]
-            if os.path.isfile(filename) and self._data_view.model().open(filename):
+            if os.path.isfile(filename) and self._data_panel.open_bill(filename):
                 self._filename = filename
                 self._settings.setValue('File/LastFilename', self._filename)
 
@@ -228,7 +226,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._check_clean():
             dialog = month_picker.MonthPickerDialog(self)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
-                self._data_view.model().new(dialog.year(), dialog.month())
+                self._data_panel.new_bill(dialog.year(), dialog.month())
                 self._filename = None
 
     def on_import_action_triggered(self, checked):
@@ -238,7 +236,7 @@ class MainWindow(QtWidgets.QMainWindow):
             directory=os.path.dirname(last_filename),
             filter=QtCore.QCoreApplication.translate('MainWindow', 'Web Bill (*.xls *.xlsx)'))[0]
         if len(filenames) > 0:
-            if self._data_view.model().import_files(filenames):
+            if self._data_panel.import_files(filenames):
                 self.statusBar().showMessage(
                     QtCore.QCoreApplication.translate('MainWindow', 'Import Successed.'), 3000)
                 self._settings.setValue('File/LastImport', filenames[0])
@@ -261,7 +259,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._filename = filename
         #
         if self._filename is not None:
-            if self._data_view.model().save(self._filename):
+            if self._data_panel.save_bill(self._filename):
                 self.statusBar().showMessage(
                     QtCore.QCoreApplication.translate('MainWindow', 'Save Successed.'), 3000)
                 self._settings.setValue('File/LastFilename', self._filename)
@@ -283,7 +281,7 @@ class MainWindow(QtWidgets.QMainWindow):
             filter=QtCore.QCoreApplication.translate('MainWindow', 'Bill (*.csv)'))[0]
         if len(filename) > 0:
             self._filename = filename
-            if self._data_view.model().save(self._filename):
+            if self._data_panel.save_bill(self._filename):
                 self.statusBar().showMessage(
                     QtCore.QCoreApplication.translate('MainWindow', 'Save Successed.'), 3000)
                 self._settings.setValue('File/LastFilename', self._filename)

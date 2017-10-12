@@ -7,9 +7,6 @@ Date:    2017/10/03
 TODO:
 feature: import qunar cash
 feature: import elong
-feature: header filter
-feature: undostack
-feature: search
 feature: insert / delete row
 """
 
