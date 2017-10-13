@@ -10,6 +10,7 @@
 <file alias="redo.png">images/Redo_96px.png</file>
 <file alias="documentation.png">images/Help_96px.png</file>
 <file alias="app.png">images/Test Passed_96px.png</file>
+<file alias="qt_zh_CN">languages/qt_zh_CN.qm</file>
 <file alias="languages_zh_CN">languages/zh_CN.qm</file>
 </qresource>
 </RCC>

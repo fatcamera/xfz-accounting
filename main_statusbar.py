@@ -30,9 +30,9 @@ class MainStatusBar(QtWidgets.QStatusBar):
         """
         super(MainStatusBar, self).__init__(parent)
         self._stat_label = QtWidgets.QLabel(self)
-        self._stat_label.setIndent(5)
+        self._stat_label.setIndent(10)
         self._transfer_label = QtWidgets.QLabel(self)
-        self._transfer_label.setIndent(5)
+        self._transfer_label.setIndent(10)
         self.addPermanentWidget(self._stat_label)
         self.addPermanentWidget(self._transfer_label)
 

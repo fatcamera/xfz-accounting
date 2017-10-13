@@ -34,7 +34,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
     """Custom table model used by label table view.
     """
 
-    Date, Room, Source, Price, Commission, Comment = range(6)
+    Date, Room, Source, Price, Commission, Adjustment, Comment = range(7)
 
     def __init__(self, parent=None):
         """Constructor.
@@ -71,6 +71,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
                 'Source': '',
                 'Price': 0.0,
                 'Commission': 0.0,
+                'Adjustment': 0.0,
                 'Comment': ''
             }, columns=datatypes.Columns)
         )
@@ -84,9 +85,16 @@ class DataTableModel(QtCore.QAbstractTableModel):
             self._undo_stack.setClean()
         except Exception as e:
             logging.error(traceback.format_exc())
-            QtWidgets.QMessageBox.warning(
-                self.parent().parent(), QtWidgets.QApplication.instance().applicationName(),
-                '{}<p>{}'.format(str(e), traceback.format_exc()))
+            msgbox = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning,
+                QtWidgets.QApplication.instance().applicationName(),
+                str(e),
+                QtWidgets.QMessageBox.Ok,
+                self.parent().parent())
+            msgbox.setInformativeText(traceback.format_exc())
+            msgbox.button(QtWidgets.QMessageBox.Ok).setText(
+                QtCore.QCoreApplication.translate('QDialogButtonBox', 'OK'))
+            msgbox.exec()
             success = False
         finally:
             return success
@@ -97,16 +105,23 @@ class DataTableModel(QtCore.QAbstractTableModel):
         try:
             df = pd.read_csv(filename, encoding='utf-8',
                 header=0, parse_dates=[0], keep_default_na=False,
-                dtype={'Source': str, 'Price': float, 'Commission': float, 'Comment': str})
-            assert len(df.columns) == len(datatypes.Columns)
-            assert np.all(df.columns == datatypes.Columns)
+                dtype={'Source': str, 'Price': float, 'Commission': float, 'Adjustment': float, 'Comment': str})
+            assert len(df.columns) == len(datatypes.Columns), 'invalid file: {}'.format(filename)
+            assert np.all(df.columns == datatypes.Columns), 'invalid file: {}'.format(filename)
             self.set_data(df)
             self._undo_stack.clear()
         except Exception as e:
             logging.error(traceback.format_exc())
-            QtWidgets.QMessageBox.warning(
-                self.parent().parent(), QtWidgets.QApplication.instance().applicationName(),
-                '{}<p>{}'.format(str(e), traceback.format_exc()))
+            msgbox = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning,
+                QtWidgets.QApplication.instance().applicationName(),
+                str(e),
+                QtWidgets.QMessageBox.Ok,
+                self.parent().parent())
+            msgbox.setInformativeText(traceback.format_exc())
+            msgbox.button(QtWidgets.QMessageBox.Ok).setText(
+                QtCore.QCoreApplication.translate('QDialogButtonBox', 'OK'))
+            msgbox.exec()
             success = False
         finally:
             return success
@@ -178,7 +193,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
         elif sheets == ['总表', '订单详情', '商家承担退款', '商家承担优惠', '调整金额']:
             self._import_meituan_prepaid(data, filename)
         else:
-            raise RuntimeError('file not supported: {}'.format(filename))
+            raise RuntimeError('invalid file: {}'.format(filename))
 
     def import_files(self, filenames):
         success = True
@@ -194,9 +209,16 @@ class DataTableModel(QtCore.QAbstractTableModel):
             self._undo_stack.push(command)
         except Exception as e:
             logging.error(traceback.format_exc())
-            QtWidgets.QMessageBox.warning(
-                self.parent().parent(), QtWidgets.QApplication.instance().applicationName(),
-                '{}<p>{}'.format(str(e), traceback.format_exc()))
+            msgbox = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning,
+                QtWidgets.QApplication.instance().applicationName(),
+                str(e),
+                QtWidgets.QMessageBox.Ok,
+                self.parent().parent())
+            msgbox.setInformativeText(traceback.format_exc())
+            msgbox.button(QtWidgets.QMessageBox.Ok).setText(
+                QtCore.QCoreApplication.translate('QDialogButtonBox', 'OK'))
+            msgbox.exec()
             success = False
         finally:
             return success
@@ -204,10 +226,9 @@ class DataTableModel(QtCore.QAbstractTableModel):
     def stat(self):
         rooms = (self._records.Source != '').sum()
         income = self._records.Price.sum()
-        expense = self._records.Commission.sum()
+        expense = self._records.Commission.sum() + self._records.Adjustment.sum()
         share = self._records[self._records.Room == '暖春'].Commission.sum()
-        yanyan = self._records[self._records.Source.isin(['去哪-现付', '线下'])].Price.sum() \
-            - self._records[(self._records.Source == '线下') & (self._records.Room != '暖春')].Commission.sum()
+        yanyan = self._records[self._records.Source.isin(['去哪-现付', '线下'])].Price.sum() - self._records.Adjustment.sum()
         return rooms, income, expense, share, yanyan
 
     def rowCount(self, index):
@@ -257,6 +278,8 @@ class DataTableModel(QtCore.QAbstractTableModel):
                     data = QtCore.QCoreApplication.translate('DataTableModel', 'Price')
                 elif section == DataTableModel.Commission:
                     data = QtCore.QCoreApplication.translate('DataTableModel', 'Commission')
+                elif section == DataTableModel.Adjustment:
+                    data = QtCore.QCoreApplication.translate('DataTableModel', 'Adjustment')
                 elif section == DataTableModel.Comment:
                     data = QtCore.QCoreApplication.translate('DataTableModel', 'Comment')
         return data
@@ -276,7 +299,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.DisplayRole:
             if index.column() == DataTableModel.Date:
                 data = self._records.iloc[index.row(), index.column()].strftime('%Y-%m-%d')
-            elif index.column() in [DataTableModel.Price, DataTableModel.Commission]:
+            elif index.column() in [DataTableModel.Price, DataTableModel.Commission, DataTableModel.Adjustment]:
                 data = self._records.iloc[index.row(), index.column()]
                 if np.fabs(data) < 0.01:
                     data = ''
@@ -289,7 +312,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.TextAlignmentRole:
             if index.column() in [DataTableModel.Date, DataTableModel.Room, DataTableModel.Source]:
                 data = QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
-            elif index.column() in [DataTableModel.Price, DataTableModel.Commission]:
+            elif index.column() in [DataTableModel.Price, DataTableModel.Commission, DataTableModel.Adjustment]:
                 data = QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
             else:
                 data = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
@@ -301,6 +324,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
                 DataTableModel.Source,
                 DataTableModel.Price,
                 DataTableModel.Commission,
+                DataTableModel.Adjustment,
                 DataTableModel.Comment
             ]:
             flag |= QtCore.Qt.ItemIsEditable
@@ -311,7 +335,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
         #
         if index.column() == DataTableModel.Source:
             success = True
-        elif index.column() in [DataTableModel.Price, DataTableModel.Commission]:
+        elif index.column() in [DataTableModel.Price, DataTableModel.Commission, DataTableModel.Adjustment]:
             try:
                 value = float(value)
             except:
@@ -382,12 +406,12 @@ class DataProxyModel(QtCore.QSortFilterProxyModel):
 
     def filterAcceptsRow(self, source_row, source_parent):
         if self._room != QtCore.QCoreApplication.translate('DataPanel', 'All'):
-            index = self.sourceModel().index(source_row, 1, source_parent)
+            index = self.sourceModel().index(source_row, DataTableModel.Room, source_parent)
             data = self.sourceModel().data(index, QtCore.Qt.DisplayRole)
             if data != self._room:
                 return False
         if self._source != QtCore.QCoreApplication.translate('DataPanel', 'All'):
-            index = self.sourceModel().index(source_row, 2, source_parent)
+            index = self.sourceModel().index(source_row, DataTableModel.Source, source_parent)
             data = self.sourceModel().data(index, QtCore.Qt.DisplayRole)
             if data != self._source:
                 return False
@@ -433,12 +457,14 @@ class DataPanel(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(DataPanel, self).__init__(parent)
 
-        filter_layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
+        filter_layout = QtWidgets.QHBoxLayout()
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('DataPanel', 'Filter Rules:'))
         label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         filter_layout.addWidget(label)
+        filter_layout.addStretch(1)
+        filter_layout.setSpacing(10)
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('DataPanel', 'Room'))
@@ -449,6 +475,7 @@ class DataPanel(QtWidgets.QWidget):
         self._room_combo.addItem(QtCore.QCoreApplication.translate('DataPanel', 'All'))
         self._room_combo.addItems(datatypes.Rooms)
         filter_layout.addWidget(self._room_combo)
+        filter_layout.addSpacing(10)
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('DataPanel', 'Source'))
@@ -466,7 +493,7 @@ class DataPanel(QtWidgets.QWidget):
         self._data_view = DataTableView()
         self._data_view.setModel(self._proxy_model)
 
-        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.TopToBottom)
+        layout = QtWidgets.QVBoxLayout()
         layout.addLayout(filter_layout)
         layout.addWidget(self._data_view)
 

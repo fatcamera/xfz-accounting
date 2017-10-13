@@ -192,13 +192,23 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._data_panel.undo_stack().isClean():
             ret = True
         else:
-            action = QtWidgets.QMessageBox.warning(
-                self, QtWidgets.QApplication.instance().applicationName(),
+            msgbox = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning,
+                QtWidgets.QApplication.instance().applicationName(),
                 QtCore.QCoreApplication.translate(
                     'MainWindow', 'Save changes before closing?'),
                 QtWidgets.QMessageBox.Save
                 | QtWidgets.QMessageBox.Discard
-                | QtWidgets.QMessageBox.Cancel)
+                | QtWidgets.QMessageBox.Cancel,
+                self)
+            msgbox.button(QtWidgets.QMessageBox.Save).setText(
+                QtCore.QCoreApplication.translate('QDialogButtonBox', 'Save'))
+            msgbox.button(QtWidgets.QMessageBox.Discard).setText(
+                QtCore.QCoreApplication.translate('QDialogButtonBox', 'Discard'))
+            msgbox.button(QtWidgets.QMessageBox.Cancel).setText(
+                QtCore.QCoreApplication.translate('QDialogButtonBox', 'Cancel'))
+            action = msgbox.exec()
+
             if action == QtWidgets.QMessageBox.Cancel:
                 ret = False
             elif action == QtWidgets.QMessageBox.Save:
@@ -309,20 +319,28 @@ class MainWindow(QtWidgets.QMainWindow):
     def on_about_action_triggered(self, checked):
         """Slot for about action.
         """
-        QtWidgets.QMessageBox.about(
-            self, QtCore.QCoreApplication.translate('MainWindow', 'About {}').format(
+        msgbox = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.NoIcon,
+            QtCore.QCoreApplication.translate('MainWindow', 'About {}').format(
                 QtWidgets.QApplication.instance().applicationName()),
-            ('<b>{}</b> v {}'
-                '<p>Copyright &copy; 2017 Cao Binbin. All rights reserved.'
-                '<p>{}'
-                '<p>Python {} - Qt {} - PyQt {} on {}').format(
+            '<b>{}</b> v {}'.format(
                     QtWidgets.QApplication.instance().applicationName(),
-                    QtWidgets.QApplication.instance().applicationVersion(),
-                    QtCore.QCoreApplication.translate(
-                        'MainWindow',
-                        'This application can be used to do accounting.'),
-                    platform.python_version(),
-                    QtCore.QT_VERSION_STR,
-                    QtCore.PYQT_VERSION_STR,
-                    platform.system()))
-
+                    QtWidgets.QApplication.instance().applicationVersion()
+                ),
+            QtWidgets.QMessageBox.Ok,
+            self)
+        msgbox.setInformativeText(
+            ('{}<p>Copyright &copy; 2017 Cao Binbin. All rights reserved.'
+            '<p>Python {} - Qt {} - PyQt {} on {}').format(
+                QtCore.QCoreApplication.translate(
+                    'MainWindow',
+                    'This application can be used to do accounting.'),
+                platform.python_version(),
+                QtCore.QT_VERSION_STR,
+                QtCore.PYQT_VERSION_STR,
+                platform.system())
+        )
+        msgbox.setIconPixmap(QtGui.QPixmap(':/app.png'))
+        msgbox.button(QtWidgets.QMessageBox.Ok).setText(
+            QtCore.QCoreApplication.translate('QDialogButtonBox', 'OK'))
+        msgbox.exec()

@@ -28,6 +28,7 @@ class MonthPickerDialog(QtWidgets.QDialog):
             parent {QtWidgets.QWidget} -- Widget parent. (default: {None})
         """
         super(MonthPickerDialog, self).__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.MSWindowsFixedSizeDialogHint)
         self._year = datetime.date.today().year
         self._month = datetime.date.today().month
         self._create_widgets()
@@ -48,7 +49,8 @@ class MonthPickerDialog(QtWidgets.QDialog):
 
     def _create_widgets(self):
         """Create widgets."""
-        content_layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.LeftToRight)
+        content_layout = QtWidgets.QHBoxLayout()
+        content_layout.setSpacing(10)
 
         # year
         spinbox = QtWidgets.QSpinBox()
@@ -56,7 +58,7 @@ class MonthPickerDialog(QtWidgets.QDialog):
         spinbox.setSingleStep(1)
         spinbox.setValue(self._year)
         spinbox.valueChanged.connect(lambda value: self.set_year(value))
-        content_layout.addWidget(spinbox)
+        content_layout.addWidget(spinbox, 1)
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('MonthPickerDialog', 'Year'))
@@ -69,7 +71,7 @@ class MonthPickerDialog(QtWidgets.QDialog):
         spinbox.setSingleStep(1)
         spinbox.setValue(self._month)
         spinbox.valueChanged.connect(lambda value: self.set_month(value))
-        content_layout.addWidget(spinbox)
+        content_layout.addWidget(spinbox, 1)
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('MonthPickerDialog', 'Month'))
@@ -79,11 +81,15 @@ class MonthPickerDialog(QtWidgets.QDialog):
         # button box
         buttons = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        buttons.button(QtWidgets.QDialogButtonBox.Ok).setText(
+            QtCore.QCoreApplication.translate('QDialogButtonBox', 'OK'))
+        buttons.button(QtWidgets.QDialogButtonBox.Cancel).setText(
+            QtCore.QCoreApplication.translate('QDialogButtonBox', 'Cancel'))
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
         # layout
-        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.TopToBottom)
+        layout = QtWidgets.QVBoxLayout()
         layout.addLayout(content_layout)
         layout.addWidget(buttons)
         self.setLayout(layout)

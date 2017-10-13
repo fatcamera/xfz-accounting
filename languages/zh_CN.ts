@@ -4,22 +4,22 @@
 <context>
     <name>DataPanel</name>
     <message>
-        <location filename="../data_panel.py" line="461"/>
+        <location filename="../data_panel.py" line="485"/>
         <source>All</source>
         <translation>全部</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="440"/>
+        <location filename="../data_panel.py" line="464"/>
         <source>Filter Rules:</source>
         <translation>过滤规则：</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="445"/>
+        <location filename="../data_panel.py" line="469"/>
         <source>Room</source>
         <translation>房型</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="455"/>
+        <location filename="../data_panel.py" line="479"/>
         <source>Source</source>
         <translation>渠道</translation>
     </message>
@@ -27,44 +27,49 @@
 <context>
     <name>DataTableModel</name>
     <message>
-        <location filename="../data_panel.py" line="252"/>
+        <location filename="../data_panel.py" line="273"/>
         <source>Date</source>
         <translation>日期</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="254"/>
+        <location filename="../data_panel.py" line="275"/>
         <source>Room</source>
         <translation>房型</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="256"/>
+        <location filename="../data_panel.py" line="277"/>
         <source>Source</source>
         <translation>渠道</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="258"/>
+        <location filename="../data_panel.py" line="279"/>
         <source>Price</source>
         <translation>价格</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="260"/>
+        <location filename="../data_panel.py" line="281"/>
         <source>Commission</source>
         <translation>佣金</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="262"/>
+        <location filename="../data_panel.py" line="285"/>
         <source>Comment</source>
         <translation>备注</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="191"/>
+        <location filename="../data_panel.py" line="206"/>
         <source>Import</source>
         <translation>导入</translation>
     </message>
     <message>
-        <location filename="../data_panel.py" line="327"/>
+        <location filename="../data_panel.py" line="351"/>
         <source>Edit</source>
         <translation>编辑</translation>
+    </message>
+    <message>
+        <location filename="../data_panel.py" line="283"/>
+        <source>Adjustment</source>
+        <translation>调整</translation>
     </message>
 </context>
 <context>
@@ -133,12 +138,12 @@
         <translation>帮助(&amp;H)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="285"/>
+        <location filename="../main_window.py" line="295"/>
         <source>Save Successed.</source>
         <translation>保存成功。</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="290"/>
+        <location filename="../main_window.py" line="300"/>
         <source>Save Failed.</source>
         <translation>保存失败。</translation>
     </message>
@@ -158,7 +163,7 @@
         <translation>关于 {}(&amp;A)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="312"/>
+        <location filename="../main_window.py" line="322"/>
         <source>About {}</source>
         <translation>关于 {}</translation>
     </message>
@@ -168,7 +173,7 @@
         <translation>打开(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="215"/>
+        <location filename="../main_window.py" line="225"/>
         <source>Open Bill</source>
         <translation>打开账单</translation>
     </message>
@@ -188,12 +193,12 @@
         <translation>导入(&amp;I)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="234"/>
+        <location filename="../main_window.py" line="244"/>
         <source>Import Web Bill</source>
         <translation>导入网络账单</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="254"/>
+        <location filename="../main_window.py" line="264"/>
         <source>Save Bill</source>
         <translation>保存账单</translation>
     </message>
@@ -203,27 +208,27 @@
         <translation>关闭前保存文件？</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="278"/>
+        <location filename="../main_window.py" line="288"/>
         <source>Bill (*.csv)</source>
         <translation>账单 (*.csv)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="234"/>
+        <location filename="../main_window.py" line="244"/>
         <source>Web Bill (*.xls *.xlsx)</source>
         <translation>网络账单 (*.xls *.xlsx)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="312"/>
+        <location filename="../main_window.py" line="332"/>
         <source>This application can be used to do accounting.</source>
         <translation>这个应用可以协助小房子对账。</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="240"/>
+        <location filename="../main_window.py" line="250"/>
         <source>Import Successed.</source>
         <translation>导入成功。</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="244"/>
+        <location filename="../main_window.py" line="254"/>
         <source>Import Failed.</source>
         <translation>导入失败。</translation>
     </message>
@@ -233,7 +238,7 @@
         <translation>另存为(&amp;A)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="278"/>
+        <location filename="../main_window.py" line="288"/>
         <source>Save Bill As</source>
         <translation>账单另存为</translation>
     </message>
@@ -241,19 +246,42 @@
 <context>
     <name>MonthPickerDialog</name>
     <message>
-        <location filename="../month_picker.py" line="34"/>
+        <location filename="../month_picker.py" line="35"/>
         <source>Choose Month</source>
         <translation>选择月份</translation>
     </message>
     <message>
-        <location filename="../month_picker.py" line="61"/>
+        <location filename="../month_picker.py" line="62"/>
         <source>Year</source>
         <translation>年</translation>
     </message>
     <message>
-        <location filename="../month_picker.py" line="74"/>
+        <location filename="../month_picker.py" line="75"/>
         <source>Month</source>
         <translation>月</translation>
+    </message>
+</context>
+<context>
+    <name>QDialogButtonBox</name>
+    <message>
+        <location filename="../month_picker.py" line="83"/>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="204"/>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="206"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../month_picker.py" line="85"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

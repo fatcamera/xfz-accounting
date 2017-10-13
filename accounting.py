@@ -6,7 +6,6 @@ Date:    2017/10/03
 
 TODO:
 feature: import elong, elong does not have room type.
-feature: insert / delete row
 """
 
 
@@ -34,9 +33,14 @@ def main():
     # i18n
     locale = QtCore.QLocale.system().name()
     logging.info('locale: {}'.format(locale))
-    translator = QtCore.QTranslator()
-    if translator.load('languages_' + locale, ':/'):
-        app.installTranslator(translator)
+
+    translator = QtCore.QTranslator(app)
+    if translator.load('qt_' + locale, ':/') and app.installTranslator(translator):
+        logging.info('system translation loaded')
+
+    translator = QtCore.QTranslator(app)
+    if translator.load('languages_' + locale, ':/') and app.installTranslator(translator):
+        logging.info('app translation loaded')
     # app info
     app.setOrganizationName('caobinbin')
     app.setOrganizationDomain('binbincao.com')
