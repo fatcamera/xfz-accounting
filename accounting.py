@@ -5,8 +5,7 @@ Authors: caobinbin(caobinbin@live.com)
 Date:    2017/10/03
 
 TODO:
-feature: import qunar cash
-feature: import elong
+feature: import elong, elong does not have room type.
 feature: insert / delete row
 """
 

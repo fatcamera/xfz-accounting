@@ -18,7 +18,8 @@ import numpy as np
 import pandas as pd
 import logging
 import traceback
-import openpyxl as px
+#import openpyxl as px
+import xlrd as xl
 
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -112,43 +113,68 @@ class DataTableModel(QtCore.QAbstractTableModel):
 
     def _import_qunar_prepaid(self, data, filename):
         logging.info('importing {}'.format(filename))
-        wb = px.load_workbook(filename)
-        for row in list(wb['订单明细'].rows)[1:-1]:
-            rooms = int(row[10].value)
+        wb = xl.open_workbook(filename, on_demand=True)
+        sheet = wb.sheet_by_name('订单明细')
+        for i in range(1, sheet.nrows - 1):
+            rooms = int(sheet.cell_value(i, 10))
             assert rooms == 1
-            nights = int(row[11].value)
+            nights = int(sheet.cell_value(i, 11))
             room_nights = rooms * nights
-            checkin = row[13].value
-            checkout = row[14].value
-            price = float(row[19].value[1:]) / room_nights
-            commission = float(row[20].value[1:]) / room_nights
-            room = row[25].value[:-1]
+            checkin = sheet.cell_value(i, 13)
+            checkout = sheet.cell_value(i, 14)
+            price = float(sheet.cell_value(i, 19)[1:]) / room_nights
+            commission = float(sheet.cell_value(i, 20)[1:]) / room_nights
+            room = sheet.cell_value(i, 25)[:-1]
             for date in pd.date_range(checkin, checkout, closed='left'):
                 data.loc[
                         (data.Date == date) & (data.Room == room),
                         ['Source', 'Price', 'Commission']
                     ] = ['去哪-预付', price, commission]
+        wb.release_resources()
+
+    def _import_qunar_cash(self, data, filename):
+        logging.info('importing {}'.format(filename))
+        wb = xl.open_workbook(filename, on_demand=True)
+        sheet = wb.sheet_by_name('前台现付服务费')
+        for i in range(1, sheet.nrows):
+            room_nights = int(sheet.cell_value(i, 7))
+            checkin = sheet.cell_value(i, 4)
+            checkout = sheet.cell_value(i, 5)
+            commission = float(sheet.cell_value(i, 9)[1:]) / room_nights
+            price = float(sheet.cell_value(i, 8)[1:]) / room_nights
+            room = sheet.cell_value(i, 2)
+            for date in pd.date_range(checkin, checkout, closed='left'):
+                data.loc[
+                        (data.Date == date) & (data.Room == room),
+                        ['Source', 'Price', 'Commission']
+                    ] = ['去哪-现付', price, commission]
+        wb.release_resources()
 
     def _import_meituan_prepaid(self, data, filename):
         logging.info('importing {}'.format(filename))
-        wb = px.load_workbook(filename)
-        for row in list(wb['订单详情'].rows)[1:]:
-            room_nights = int(row[6].value)
-            checkin, checkout = row[3].value.split('~')
-            commission = float(row[8].value) / room_nights
-            price = float(row[9].value) / room_nights + commission
-            room = row[4].value
+        wb = xl.open_workbook(filename, on_demand=True)
+        sheet = wb.sheet_by_name('订单详情')
+        for i in range(1, sheet.nrows):
+            room_nights = int(sheet.cell_value(i, 6))
+            checkin, checkout = sheet.cell_value(i, 3).split('~')
+            commission = float(sheet.cell_value(i, 8)) / room_nights
+            price = float(sheet.cell_value(i, 9)) / room_nights + commission
+            room = sheet.cell_value(i, 4)
             for date in pd.date_range(checkin, checkout, closed='left'):
                 data.loc[
                         (data.Date == date) & (data.Room == room),
                         ['Source', 'Price', 'Commission']
                     ] = ['美团-预定', price, commission]
+        wb.release_resources()
 
     def _import_filename(self, data, filename):
-        wb = px.load_workbook(filename, read_only=True)
-        sheets = wb.get_sheet_names()
+        wb = xl.open_workbook(filename, on_demand=True)
+        sheets = wb.sheet_names()
+        wb.release_resources()
         if sheets == ['总计', '订单明细', '人工调整明细', '过期返现明细']:
             self._import_qunar_prepaid(data, filename)
+        elif sheets == ['预付阶梯算量订单明细', '前台现付代收房费', '钟点房现付服务费', '夜销现付服务费', '前台现付服务费']:
+            self._import_qunar_cash(data, filename)
         elif sheets == ['总表', '订单详情', '商家承担退款', '商家承担优惠', '调整金额']:
             self._import_meituan_prepaid(data, filename)
         else:
@@ -347,23 +373,6 @@ class EditDelegate(QtWidgets.QStyledItemDelegate):
             super(EditDelegate, self).setModelData(editor, model, index)
 
 
-class DataTableView(QtWidgets.QTableView):
-    """Label table view.
-    """
-
-    def __init__(self, parent=None):
-        """Constructor.
-        
-        Keyword Arguments:
-            parent {QtWidgets.QWidget} -- Widget parent. (default: {None})
-        """
-        super(DataTableView, self).__init__(parent)
-        self.setItemDelegate(EditDelegate(self))
-        self.setAlternatingRowColors(True)
-        self.horizontalHeader().setStretchLastSection(True)
-        self.horizontalHeader().setHighlightSections(False)
-
-
 class DataProxyModel(QtCore.QSortFilterProxyModel):
 
     def __init__(self, parent=None):
@@ -396,6 +405,23 @@ class DataProxyModel(QtCore.QSortFilterProxyModel):
         self._room = QtCore.QCoreApplication.translate('DataPanel', 'All')
         self._source = QtCore.QCoreApplication.translate('DataPanel', 'All')
         self.invalidateFilter()
+
+
+class DataTableView(QtWidgets.QTableView):
+    """Label table view.
+    """
+
+    def __init__(self, parent=None):
+        """Constructor.
+        
+        Keyword Arguments:
+            parent {QtWidgets.QWidget} -- Widget parent. (default: {None})
+        """
+        super(DataTableView, self).__init__(parent)
+        self.setItemDelegate(EditDelegate(self))
+        self.setAlternatingRowColors(True)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setHighlightSections(False)
 
 
 class DataPanel(QtWidgets.QWidget):
