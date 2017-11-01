@@ -137,8 +137,8 @@ class DataTableModel(QtCore.QAbstractTableModel):
             room_nights = rooms * nights
             checkin = sheet.cell_value(i, 13)
             checkout = sheet.cell_value(i, 14)
-            price = float(sheet.cell_value(i, 19)[1:]) / room_nights
-            commission = float(sheet.cell_value(i, 20)[1:]) / room_nights
+            price = float(sheet.cell_value(i, 19)[1:].replace(',', '')) / room_nights
+            commission = float(sheet.cell_value(i, 20)[1:].replace(',', '')) / room_nights
             room = sheet.cell_value(i, 25)[:-1]
             for date in pd.date_range(checkin, checkout, closed='left'):
                 data.loc[
@@ -170,11 +170,11 @@ class DataTableModel(QtCore.QAbstractTableModel):
         wb = xl.open_workbook(filename, on_demand=True)
         sheet = wb.sheet_by_name('订单详情')
         for i in range(1, sheet.nrows):
-            room_nights = int(sheet.cell_value(i, 6))
-            checkin, checkout = sheet.cell_value(i, 3).split('~')
-            commission = float(sheet.cell_value(i, 8)) / room_nights
-            price = float(sheet.cell_value(i, 9)) / room_nights + commission
-            room = sheet.cell_value(i, 4)
+            room_nights = int(sheet.cell_value(i, 7))
+            checkin, checkout = sheet.cell_value(i, 4).split('~')
+            commission = float(sheet.cell_value(i, 9)) / room_nights
+            price = float(sheet.cell_value(i, 10)) / room_nights + commission
+            room = sheet.cell_value(i, 5)
             for date in pd.date_range(checkin, checkout, closed='left'):
                 data.loc[
                         (data.Date == date) & (data.Room == room),
