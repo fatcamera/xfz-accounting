@@ -20,6 +20,7 @@ import logging
 import traceback
 #import openpyxl as px
 import xlrd as xl
+import html.parser
 
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -81,7 +82,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
     def save(self, filename):
         success = True
         try:
-            self._records.to_csv(filename, index=False, encoding='utf-8')
+            self._records.to_csv(filename, float_format='%.2f', index=False, encoding='utf-8')
             self._undo_stack.setClean()
         except Exception as e:
             logging.error(traceback.format_exc())
@@ -165,8 +166,9 @@ class DataTableModel(QtCore.QAbstractTableModel):
                     ] = ['去哪-现付', price, commission]
         wb.release_resources()
 
-    def _import_meituan_prepaid(self, data, filename):
+    def _import_meituan_prepaid(self, filename):
         logging.info('importing {}'.format(filename))
+        records = []
         wb = xl.open_workbook(filename, on_demand=True)
         sheet = wb.sheet_by_name('订单详情')
         for i in range(1, sheet.nrows):
@@ -174,24 +176,27 @@ class DataTableModel(QtCore.QAbstractTableModel):
             checkin, checkout = sheet.cell_value(i, 4).split('~')
             commission = float(sheet.cell_value(i, 9)) / room_nights
             price = float(sheet.cell_value(i, 10)) / room_nights + commission
-            room = sheet.cell_value(i, 5)
-            for date in pd.date_range(checkin, checkout, closed='left'):
-                data.loc[
-                        (data.Date == date) & (data.Room == room),
-                        ['Source', 'Price', 'Commission']
-                    ] = ['美团-预定', price, commission]
+            record = datatypes.Record(source='美团-预定', room=sheet.cell_value(i, 5),
+                        price=price, commission=commission, adjustment=0.0,
+                        checkin=checkin, checkout=checkout, comment='')
+            records.append(record)
         wb.release_resources()
+        return records
 
-    def _import_filename(self, data, filename):
-        wb = xl.open_workbook(filename, on_demand=True)
-        sheets = wb.sheet_names()
-        wb.release_resources()
-        if sheets == ['总计', '订单明细', '人工调整明细', '过期返现明细']:
-            self._import_qunar_prepaid(data, filename)
-        elif sheets == ['预付阶梯算量订单明细', '前台现付代收房费', '钟点房现付服务费', '夜销现付服务费', '前台现付服务费']:
-            self._import_qunar_cash(data, filename)
-        elif sheets == ['总表', '订单详情', '商家承担退款', '商家承担优惠', '调整金额']:
-            self._import_meituan_prepaid(data, filename)
+    def _import_ctrip_prepaid(self, filename):
+        logging.info('importing {}'.format(filename))
+        parser = CtripParser()
+        with open(filename, 'r') as f:
+            parser.feed(f.read())
+        return parser.records()
+
+    def _import_filename(self, filename):
+        with open(filename, 'rb') as f:
+            magic = f.read(10)
+        if magic[:4] == b'\x50\x4b\x03\x04':
+            return self._import_meituan_prepaid(filename)
+        elif magic[:6] == b'<html>':
+            return self._import_ctrip_prepaid(filename)
         else:
             raise RuntimeError('invalid file: {}'.format(filename))
 
@@ -200,8 +205,15 @@ class DataTableModel(QtCore.QAbstractTableModel):
         try:
             # import files
             temp = self._records.copy(deep=True)
+            records = []
             for filename in filenames:
-                self._import_filename(temp, filename)
+                records.extend(self._import_filename(filename))
+            for r in records:
+                for date in pd.date_range(r.checkin, r.checkout, closed='left'):
+                    temp.loc[
+                            (temp.Date == date) & (temp.Room == r.room),
+                            ['Source', 'Price', 'Commission']
+                        ] = [r.source, r.price, r.commission]
             command = undocommands.ResetCommand(self,
                 QtCore.QCoreApplication.translate('DataTableModel', 'Import'))
             command.old_data = self._records.copy(deep=True)
@@ -522,3 +534,78 @@ class DataPanel(QtWidgets.QWidget):
 
     def undo_stack(self):
         return self._data_model.undo_stack()
+
+
+class CtripParser(html.parser.HTMLParser):
+
+    def __init__(self):
+        super(CtripParser, self).__init__()
+        self._tags = []
+        self._data_start = 0
+        self._field_index = 0
+        self._records = []
+        self._room_nights = 0
+        self._checkin = None
+        self._checkout = None
+        self._commission = 0.0
+        self._price = 0.0
+        self._room = None
+
+    def handle_starttag(self, tag, attrs):
+        if self._data_start == 2 and tag == 'table':
+            self._data_start = 3 # current table found
+        elif self._data_start == 3 and tag == 'tr':
+            self._field_index = 0 # start a record
+        # fix malformatted html
+        if tag == 'tr' and len(self._tags) > 0 and self._tags[-1] == 'tr':
+            self._tags.pop()
+        self._tags.append(tag)
+
+    def handle_endtag(self, tag):
+        if self._data_start == 1 and tag == 'table':
+            self._data_start = 2 # prev table exit
+        elif self._data_start == 3 and tag == 'table':
+            self._data_start = 4 # current table exit
+        elif self._data_start == 3 and tag == 'td':
+            self._field_index += 1
+            if self._field_index == 19: # finish a record
+                self._price = self._price / self._room_nights / 0.9
+                self._commission = self._price * 0.1
+                record = datatypes.Record(source='携程-预付', room=self._room,
+                            price=self._price, commission=self._commission, adjustment=0.0,
+                            checkin=self._checkin, checkout=self._checkout, comment='')
+                self._records.append(record)
+        e = None
+        while e != tag and len(self._tags) > 0:
+            e = self._tags.pop()
+
+    def handle_data(self, data):
+        if data.strip().startswith('预付订单明细') \
+                and len(self._tags) > 4 \
+                and self._tags[-1] == 'b' \
+                and self._tags[-2] == 'td' \
+                and self._tags[-3] == 'tr' \
+                and self._tags[-4] == 'table':
+            self._data_start = 1 # prev table found
+        elif self._data_start == 3:
+            if self._field_index == 5:
+                # checkin
+                self._checkin = '2018-' + data.strip()
+            elif self._field_index == 6:
+                # checkout
+                self._checkout = '2018-' + data.strip()
+            elif self._field_index == 8:
+                # price
+                self._price = float(data.strip())
+            elif self._field_index == 12:
+                # room
+                data = data.strip()
+                data = data[:data.index('(')]
+                self._room = data
+            elif self._field_index == 13:
+                # room_nights
+                self._room_nights = int(float(data.strip()))
+
+    def records(self):
+        return self._records
+
