@@ -22,9 +22,9 @@ import traceback
 import xlrd as xl
 import html.parser
 
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from PyQt6 import QtCore
+from PyQt6 import QtGui
+from PyQt6 import QtWidgets
 
 import datatypes
 import utils
@@ -45,7 +45,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
         """
         super(DataTableModel, self).__init__(parent)
         self._records = pd.DataFrame([], columns=datatypes.Columns)
-        self._undo_stack = QtWidgets.QUndoStack(self)
+        self._undo_stack = QtGui.QUndoStack(self)
 
     def undo_stack(self):
         return self._undo_stack
@@ -278,8 +278,8 @@ class DataTableModel(QtCore.QAbstractTableModel):
                                 with the specified orientation.
         """
         data = None
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
+            if orientation == QtCore.Qt.Orientation.Horizontal:
                 if section == DataTableModel.Date:
                     data = QtCore.QCoreApplication.translate('DataTableModel', 'Date')
                 elif section == DataTableModel.Room:
@@ -308,7 +308,7 @@ class DataTableModel(QtCore.QAbstractTableModel):
                                 for the item referred to by the index.
         """
         data = None
-        if role == QtCore.Qt.DisplayRole:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
             if index.column() == DataTableModel.Date:
                 data = self._records.iloc[index.row(), index.column()].strftime('%Y-%m-%d')
             elif index.column() in [DataTableModel.Price, DataTableModel.Commission, DataTableModel.Adjustment]:
@@ -319,15 +319,15 @@ class DataTableModel(QtCore.QAbstractTableModel):
                     data = '{:.2f}'.format(data)
             else:
                 data = self._records.iloc[index.row(), index.column()]
-        elif role == QtCore.Qt.EditRole:
+        elif role == QtCore.Qt.ItemDataRole.EditRole:
             data = self._records.iloc[index.row(), index.column()]
-        elif role == QtCore.Qt.TextAlignmentRole:
+        elif role == QtCore.Qt.ItemDataRole.TextAlignmentRole:
             if index.column() in [DataTableModel.Date, DataTableModel.Room, DataTableModel.Source]:
-                data = QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+                data = QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter
             elif index.column() in [DataTableModel.Price, DataTableModel.Commission, DataTableModel.Adjustment]:
-                data = QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+                data = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
             else:
-                data = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+                data = QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
         return data
 
     def flags(self, index):
@@ -339,10 +339,10 @@ class DataTableModel(QtCore.QAbstractTableModel):
                 DataTableModel.Adjustment,
                 DataTableModel.Comment
             ]:
-            flag |= QtCore.Qt.ItemIsEditable
+            flag |= QtCore.Qt.ItemFlag.ItemIsEditable
         return flag
 
-    def setData(self, index, value, role=QtCore.Qt.EditRole):
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
         success = False
         #
         if index.column() == DataTableModel.Source:
@@ -395,7 +395,7 @@ class EditDelegate(QtWidgets.QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
         if index.column() == DataTableModel.Source:
-            i = editor.findText(index.model().data(index, QtCore.Qt.EditRole))
+            i = editor.findText(index.model().data(index, QtCore.Qt.ItemDataRole.EditRole))
             if i == -1:
                 i = 0
             editor.setCurrentIndex(i)
@@ -419,12 +419,12 @@ class DataProxyModel(QtCore.QSortFilterProxyModel):
     def filterAcceptsRow(self, source_row, source_parent):
         if self._room != QtCore.QCoreApplication.translate('DataPanel', 'All'):
             index = self.sourceModel().index(source_row, DataTableModel.Room, source_parent)
-            data = self.sourceModel().data(index, QtCore.Qt.DisplayRole)
+            data = self.sourceModel().data(index, QtCore.Qt.ItemDataRole.DisplayRole)
             if data != self._room:
                 return False
         if self._source != QtCore.QCoreApplication.translate('DataPanel', 'All'):
             index = self.sourceModel().index(source_row, DataTableModel.Source, source_parent)
-            data = self.sourceModel().data(index, QtCore.Qt.DisplayRole)
+            data = self.sourceModel().data(index, QtCore.Qt.ItemDataRole.DisplayRole)
             if data != self._source:
                 return False
         return True
@@ -473,14 +473,14 @@ class DataPanel(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('DataPanel', 'Filter Rules:'))
-        label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
         filter_layout.addWidget(label)
         filter_layout.addStretch(1)
         filter_layout.setSpacing(10)
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('DataPanel', 'Room'))
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         filter_layout.addWidget(label)
 
         self._room_combo = QtWidgets.QComboBox()
@@ -491,7 +491,7 @@ class DataPanel(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel(
             QtCore.QCoreApplication.translate('DataPanel', 'Source'))
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         filter_layout.addWidget(label)
 
         self._source_combo = QtWidgets.QComboBox()

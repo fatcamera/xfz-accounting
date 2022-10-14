@@ -13,9 +13,9 @@ from __future__ import unicode_literals
 
 import datetime
 
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from PyQt6 import QtCore
+from PyQt6 import QtGui
+from PyQt6 import QtWidgets
 
 
 class MonthPickerDialog(QtWidgets.QDialog):

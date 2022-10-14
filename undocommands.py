@@ -11,12 +11,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from PyQt6 import QtCore
+from PyQt6 import QtGui
+from PyQt6 import QtWidgets
 
 
-class ResetCommand(QtWidgets.QUndoCommand):
+class ResetCommand(QtGui.QUndoCommand):
     """Fill undo command. Modifies the label.
     """
 
@@ -46,7 +46,7 @@ class ResetCommand(QtWidgets.QUndoCommand):
         self._owner.set_data(self.new_data.copy(deep=True))
 
 
-class EditCommand(QtWidgets.QUndoCommand):
+class EditCommand(QtGui.QUndoCommand):
     """Fill undo command. Modifies the label.
     """
 

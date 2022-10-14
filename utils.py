@@ -10,7 +10,7 @@ import sys
 import logging
 import functools
 
-from PyQt5 import QtGui
+from PyQt6 import QtGui
 import numpy as np
 
 

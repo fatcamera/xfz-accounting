@@ -17,9 +17,9 @@ import platform
 import logging
 import traceback
 
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from PyQt6 import QtCore
+from PyQt6 import QtGui
+from PyQt6 import QtWidgets
 
 import utils
 import resources
@@ -64,32 +64,32 @@ class MainWindow(QtWidgets.QMainWindow):
         """Create actions, menubar, toolbar.
         """
         # actions
-        open_action = QtWidgets.QAction(
+        open_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', '&Open'), self)
-        open_action.setShortcut(QtGui.QKeySequence.Open)
+        open_action.setShortcut(QtGui.QKeySequence.StandardKey.Open)
         open_action.setIcon(QtGui.QIcon(':/open.png'))
         open_action.setToolTip(
             QtCore.QCoreApplication.translate('MainWindow', 'Open Bill'))
         open_action.triggered.connect(self.on_open_action_triggered)
 
-        new_action = QtWidgets.QAction(
+        new_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', '&New'), self)
-        new_action.setShortcut(QtGui.QKeySequence.New)
+        new_action.setShortcut(QtGui.QKeySequence.StandardKey.New)
         new_action.setIcon(QtGui.QIcon(':/new.png'))
         new_action.setToolTip(
             QtCore.QCoreApplication.translate('MainWindow', 'New Bill'))
         new_action.triggered.connect(self.on_new_action_triggered)
 
-        import_action = QtWidgets.QAction(
+        import_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', '&Import'), self)
         import_action.setIcon(QtGui.QIcon(':/import.png'))
         import_action.setToolTip(
             QtCore.QCoreApplication.translate('MainWindow', 'Import Web Bill'))
         import_action.triggered.connect(self.on_import_action_triggered)
 
-        save_action = QtWidgets.QAction(
+        save_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', '&Save'), self)
-        save_action.setShortcut(QtGui.QKeySequence.Save)
+        save_action.setShortcut(QtGui.QKeySequence.StandardKey.Save)
         save_action.setIcon(QtGui.QIcon(':/save.png'))
         save_action.setToolTip(
             QtCore.QCoreApplication.translate('MainWindow', 'Save Bill'))
@@ -98,41 +98,41 @@ class MainWindow(QtWidgets.QMainWindow):
             lambda clean: save_action.setEnabled(not clean))
         save_action.triggered.connect(self.on_save_action_triggered)
 
-        save_as_action = QtWidgets.QAction(
+        save_as_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', 'Save &As'), self)
-        save_as_action.setShortcut(QtGui.QKeySequence.SaveAs)
+        save_as_action.setShortcut(QtGui.QKeySequence.StandardKey.SaveAs)
         save_as_action.setIcon(QtGui.QIcon(':/save_as.png'))
         save_as_action.setToolTip(
             QtCore.QCoreApplication.translate('MainWindow', 'Save Bill As'))
         save_as_action.triggered.connect(self.on_save_as_action_triggered)
 
-        exit_action = QtWidgets.QAction(
+        exit_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', 'E&xit'), self)
-        exit_action.setShortcut(QtGui.QKeySequence.Quit)
+        exit_action.setShortcut(QtGui.QKeySequence.StandardKey.Quit)
         exit_action.setIcon(QtGui.QIcon(':/exit.png'))
         exit_action.setToolTip(QtCore.QCoreApplication.translate('MainWindow', 'Exit'))
         exit_action.triggered.connect(self.close)
 
         undo_action = self._data_panel.undo_stack().createUndoAction(
             self, QtCore.QCoreApplication.translate('MainWindow', '&Undo'))
-        undo_action.setShortcut(QtGui.QKeySequence.Undo)
+        undo_action.setShortcut(QtGui.QKeySequence.StandardKey.Undo)
         undo_action.setIcon(QtGui.QIcon(':/undo.png'))
 
         redo_action = self._data_panel.undo_stack().createRedoAction(
             self, QtCore.QCoreApplication.translate('MainWindow', '&Redo'))
-        redo_action.setShortcut(QtGui.QKeySequence.Redo)
+        redo_action.setShortcut(QtGui.QKeySequence.StandardKey.Redo)
         redo_action.setIcon(QtGui.QIcon(':/redo.png'))
 
-        documentation_action = QtWidgets.QAction(
+        documentation_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', '&Documentation'), self)
-        documentation_action.setShortcut(QtGui.QKeySequence.HelpContents)
+        documentation_action.setShortcut(QtGui.QKeySequence.StandardKey.HelpContents)
         documentation_action.setIcon(QtGui.QIcon(':/documentation.png'))
         documentation_action.setToolTip(
             QtCore.QCoreApplication.translate('MainWindow', 'Open Documentation'))
         documentation_action.triggered.connect(self.on_documentation_action_triggered)
         documentation_action.setEnabled(False)
 
-        about_action = QtWidgets.QAction(
+        about_action = QtGui.QAction(
             QtCore.QCoreApplication.translate('MainWindow', '&About {}').format(
                 QtWidgets.QApplication.instance().applicationName()), self)
         about_action.setIcon(QtGui.QIcon(':/app.png'))
